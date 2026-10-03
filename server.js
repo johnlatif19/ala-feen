@@ -1097,7 +1097,13 @@ app.use((err, req, res, _next) => {
   const message =
     status >= 500 && isProd ? "حدث خطأ في الخادم" : (err.message || "حدث خطأ");
 
-  if (!isProd) console.error(err);
+  console.error("[ERROR]", {
+    path: req.path,
+    method: req.method,
+    status,
+    message: err.message,
+    stack: err.stack,
+  });
 
   if (req.path.startsWith("/api/")) {
     return fail(res, status, message, err.code ? { code: err.code } : {});
