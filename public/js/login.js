@@ -100,8 +100,8 @@
       setFieldError("username", "اسم المستخدم يجب أن يكون 3 أحرف على الأقل");
       ok = false;
     }
-    if (p.length < 6) {
-      setFieldError("password", "كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    if (p.length < 4) {
+      setFieldError("password", "كلمة المرور يجب أن تكون 4 أحرف على الأقل");
       ok = false;
     }
     return ok;
