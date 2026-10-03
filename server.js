@@ -67,11 +67,11 @@ const validateEnv = () => {
   const missing = REQUIRED_ENV.filter(([, v]) => !v).map(([k]) => k);
   if (missing.length) {
     console.error(`Missing required environment variables: ${missing.join(", ")}`);
-    process.exit(1);
+    throw new Error(`Missing env: ${missing.join(", ")}`);
   }
   if (CONFIG.jwtSecret.length < 32) {
     console.error("JWT_SECRET must be at least 32 characters.");
-    process.exit(1);
+    throw new Error("JWT_SECRET too short");
   }
 };
 
@@ -97,7 +97,11 @@ const initFirebase = () => {
   db.settings({ ignoreUndefinedProperties: true });
 };
 
-const col = (name) => db.collection(name);
+const col = (name) => {
+  if (!db) throw new Error("Firestore not initialized");
+  return db.collection(name);
+};
+
 const nowTs = () => admin.firestore.Timestamp.now();
 const Timestamp = () => admin.firestore.Timestamp;
 
@@ -1115,17 +1119,19 @@ app.use((err, req, res, _next) => {
    25. BOOTSTRAP
    ========================================================= */
 
-const start = () => {
+const bootstrap = () => {
   validateEnv();
   initFirebase();
   initCloudinary();
+};
 
+bootstrap();
+
+if (require.main === module) {
   app.listen(CONFIG.port, () => {
     console.log(`ALA FEEN? server running on port ${CONFIG.port} [${CONFIG.env}]`);
   });
-};
-
-if (require.main === module) start();
+}
 
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
