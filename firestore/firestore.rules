@@ -1,0 +1,257 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* =========================================================
+       HELPERS
+       ========================================================= */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token != null
+        && request.auth.token.admin == true;
+    }
+
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 128
+        && id.matches('^[A-Za-z0-9_\\-]+$');
+    }
+
+    function isValidString(value, minLen, maxLen) {
+      return value is string
+        && value.size() >= minLen
+        && value.size() <= maxLen;
+    }
+
+    function isValidUrl(value) {
+      return value is string
+        && value.size() <= 2048
+        && (value.matches('^https://.*') || value.matches('^http://.*'));
+    }
+
+    function isValidNumber(value, min, max) {
+      return value is number && value >= min && value <= max;
+    }
+
+    function isLatitude(value) {
+      return isValidNumber(value, -90, 90);
+    }
+
+    function isLongitude(value) {
+      return isValidNumber(value, -180, 180);
+    }
+
+    function onlyFieldsAllowed(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    function noFieldsChanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(fields);
+    }
+
+    function timestampsIntactOnUpdate() {
+      return request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function isCreate() {
+      return request.method == 'create';
+    }
+
+    function isUpdate() {
+      return request.method == 'update';
+    }
+
+    function isDelete() {
+      return request.method == 'delete';
+    }
+
+    /* =========================================================
+       PUBLIC READ-ONLY COLLECTIONS
+       Users app reads these; only Admin (server SDK) writes.
+       ========================================================= */
+
+    match /governorates/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /cities/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /areas/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /transportTypes/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /routes/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /stations/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /fares/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    /* =========================================================
+       USERS
+       Users can read and edit their own profile.
+       Cannot change role, active, or createdAt.
+       ========================================================= */
+
+    match /users/{userId} {
+      allow read: if isSignedIn()
+        && (request.auth.uid == userId || isAdmin());
+
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && onlyFieldsAllowed(['name', 'email', 'phone', 'createdAt', 'updatedAt', 'active', 'deleted'])
+        && request.resource.data.active == true
+        && request.resource.data.deleted == false
+        && isValidString(request.resource.data.name, 1, 100);
+
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && onlyFieldsAllowed(['name', 'email', 'phone', 'updatedAt'])
+        && noFieldsChanged(['createdAt', 'role', 'active', 'deleted']);
+
+      allow delete: if false;
+    }
+
+    /* =========================================================
+       COMPLAINTS
+       Signed users can create their own complaint.
+       Anyone signed in can read complaints (so they can confirm).
+       Only Admin SDK (server) can update status/priority.
+       ========================================================= */
+
+    match /complaints/{id} {
+      allow read: if isSignedIn() && resource.data.deleted == false;
+
+      allow create: if isSignedIn()
+        && onlyFieldsAllowed([
+          'type', 'title', 'description', 'location',
+          'latitude', 'longitude', 'transportType', 'routeId',
+          'userId', 'images', 'status', 'priority',
+          'createdAt', 'updatedAt', 'deleted'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'new'
+        && request.resource.data.priority == 'low'
+        && request.resource.data.deleted == false
+        && isValidString(request.resource.data.title, 3, 200)
+        && isValidString(request.resource.data.description, 5, 2000)
+        && (!('latitude' in request.resource.data) || isLatitude(request.resource.data.latitude))
+        && (!('longitude' in request.resource.data) || isLongitude(request.resource.data.longitude))
+        && (!('images' in request.resource.data)
+            || (request.resource.data.images is list
+                && request.resource.data.images.size() <= 6));
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /* =========================================================
+       COMPLAINT CONFIRMATIONS
+       Users can confirm a complaint once.
+       Structure: confirmations/{complaintId}/users/{uid}
+       ========================================================= */
+
+    match /complaints/{complaintId}/confirmations/{userId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && onlyFieldsAllowed(['createdAt'])
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /* =========================================================
+       SUGGESTIONS
+       ========================================================= */
+
+    match /suggestions/{id} {
+      allow read: if isSignedIn() && resource.data.deleted == false;
+
+      allow create: if isSignedIn()
+        && onlyFieldsAllowed([
+          'title', 'description', 'location', 'latitude', 'longitude',
+          'transportType', 'routeId', 'userId', 'images',
+          'status', 'priority', 'createdAt', 'updatedAt', 'deleted'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'new'
+        && request.resource.data.priority == 'low'
+        && request.resource.data.deleted == false
+        && isValidString(request.resource.data.title, 3, 200)
+        && (!('description' in request.resource.data)
+            || isValidString(request.resource.data.description, 0, 2000));
+
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /* =========================================================
+       REPORTS
+       Server-side only.
+       ========================================================= */
+
+    match /reports/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    /* =========================================================
+       ADMIN LOGS
+       Never accessible from client.
+       ========================================================= */
+
+    match /adminLogs/{id} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    /* =========================================================
+       SYNC METADATA
+       Clients can read for offline sync; server writes.
+       ========================================================= */
+
+    match /syncMetadata/{id} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    /* =========================================================
+       CATCH-ALL
+       Deny everything else by default.
+       ========================================================= */
+
+    match /{document=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}
