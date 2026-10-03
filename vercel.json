@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["public/**"] }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "server.js" },
+    { "src": "/css/(.*)", "dest": "public/css/$1" },
+    { "src": "/js/(.*)", "dest": "public/js/$1" },
+    { "src": "/assets/(.*)", "dest": "public/assets/$1" },
+    { "src": "/login", "dest": "public/login.html" },
+    { "src": "/dashboard", "dest": "public/dashboard.html" },
+    { "src": "/(.*)", "dest": "server.js" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/(css|js|assets)/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}

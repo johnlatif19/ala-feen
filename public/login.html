@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="على فين؟ | ALA FEEN? - تسجيل دخول الإدارة" />
+  <meta name="theme-color" content="#0D2B4C" />
+  <title>تسجيل الدخول | على فين؟ | ALA FEEN?</title>
+
+  <link rel="icon" type="image/png" href="/public/assets/logo.png" />
+  <link rel="apple-touch-icon" href="/public/assets/logo.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="/public/css/login.css" />
+</head>
+<body>
+
+  <button
+    type="button"
+    id="themeToggle"
+    class="theme-toggle"
+    aria-label="تبديل الوضع الليلي"
+    aria-pressed="false"
+  >
+    <span class="theme-toggle__label">Dark</span>
+  </button>
+
+  <main class="auth" role="main">
+
+    <section class="auth__card" aria-labelledby="loginHeading">
+
+      <header class="auth__header">
+        <img
+          src="/public/assets/logo.png"
+          alt="على فين؟ ALA FEEN?"
+          class="auth__logo"
+          width="160"
+          height="160"
+          decoding="async"
+        />
+        <h1 class="auth__brand-ar">على فين؟</h1>
+        <p class="auth__brand-en">ALA FEEN?</p>
+        <p class="auth__tagline">لوحة تحكم الإدارة</p>
+      </header>
+
+      <form id="loginForm" class="form" novalidate autocomplete="on">
+
+        <div class="form__group">
+          <label for="username" class="form__label">اسم المستخدم</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            class="form__input"
+            placeholder="ادخل اسم المستخدم"
+            required
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            dir="ltr"
+            minlength="3"
+            maxlength="64"
+          />
+          <p class="form__error" data-error-for="username" role="alert"></p>
+        </div>
+
+        <div class="form__group">
+          <label for="password" class="form__label">كلمة المرور</label>
+          <div class="form__input-wrap">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              class="form__input"
+              placeholder="ادخل كلمة المرور"
+              required
+              autocomplete="current-password"
+              dir="rtl"
+              minlength="6"
+              maxlength="128"
+            />
+            <button
+              type="button"
+              id="togglePassword"
+              class="form__input-action"
+              aria-label="إظهار كلمة المرور"
+              aria-pressed="false"
+            >
+              <svg
+                class="form__input-action-icon form__input-action-icon--eye-open"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg
+                class="form__input-action-icon form__input-action-icon--eye-closed"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19" />
+                <path d="M9.88 9.88a3 3 0 0 0 4.24 4.24" />
+                <line x1="2" y1="2" x2="22" y2="22" />
+              </svg>
+            </button>
+          </div>
+          <p class="form__error" data-error-for="password" role="alert"></p>
+        </div>
+
+        <div class="form__row">
+          <label class="checkbox" for="remember">
+            <input id="remember" name="remember" type="checkbox" />
+            <span class="checkbox__box" aria-hidden="true"></span>
+            <span class="checkbox__label">تذكرني لمدة 30 يوماً</span>
+          </label>
+        </div>
+
+        <p id="formMessage" class="form__message" role="alert" hidden></p>
+
+        <button type="submit" id="submitBtn" class="btn btn--primary btn--block">
+          <span class="btn__label">دخول</span>
+          <span class="btn__spinner" aria-hidden="true"></span>
+        </button>
+
+      </form>
+
+      <footer class="auth__footer">
+        <p>
+          جميع الحقوق محفوظة &copy; <span id="year"></span>
+          <span class="auth__footer-sep">—</span>
+          <span class="auth__footer-brand">على فين؟ | ALA FEEN?</span>
+        </p>
+      </footer>
+
+    </section>
+
+  </main>
+
+  <script src="/public/js/login.js" defer></script>
+</body>
+</html>
