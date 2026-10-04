@@ -153,12 +153,12 @@
     const res = await fetch(path, opts);
 
     if (res.status === 401) {
-      window.location.replace("/login.html");
+      window.location.replace("/login");
       throw new Error("unauthorized");
     }
 
     if (res.status === 403 && !["GET", "HEAD", "OPTIONS"].includes(method)) {
-      window.location.replace("/login.html");
+      window.location.replace("/login");
       throw new Error("csrf");
     }
 
@@ -1526,7 +1526,7 @@
 
   const handleLogout = async () => {
     try { await apiRequest(API.logout, { method: "POST" }); } catch (_) {}
-    window.location.replace("/login.html");
+    window.location.replace("/login");
   };
 
   const initSearch = () => {
