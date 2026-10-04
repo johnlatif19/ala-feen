@@ -528,7 +528,7 @@ app.post("/api/auth/login", asyncHandler(async (req, res) => {
     timestamp: nowTs(),
   }).catch(() => {});
 
-  return ok(res, { admin: adminUser, redirect: "/dashboard.html", csrf });
+  return ok(res, { admin: adminUser, redirect: "/dashboard", csrf });
 }));
 
 app.post("/api/auth/logout", requireAuth, requireCsrf, asyncHandler(async (req, res) => {
@@ -1092,11 +1092,15 @@ app.post("/api/sync/ack", requireAuth, requireCsrf, asyncHandler(async (req, res
 
 const PUBLIC_DIR = path.join(__dirname, "public");
 
-app.get("/", (req, res) => res.redirect("/login.html"));
-app.get("/login", (req, res) => res.sendFile(path.join(PUBLIC_DIR, "login.html")));
-app.get("/dashboard", (req, res) => res.sendFile(path.join(PUBLIC_DIR, "dashboard.html")));
-app.get("/login.html", (req, res) => res.sendFile(path.join(PUBLIC_DIR, "login.html")));
-app.get("/dashboard.html", (req, res) => res.sendFile(path.join(PUBLIC_DIR, "dashboard.html")));
+const sendPage = (res, file) =>
+  res.sendFile(path.join(PUBLIC_DIR, file));
+
+app.get("/",          (req, res) => res.redirect("/login"));
+app.get("/login",     (req, res) => sendPage(res, "login.html"));
+app.get("/dashboard", (req, res) => sendPage(res, "dashboard.html"));
+
+app.get("/login.html",     (req, res) => res.redirect(301, "/login"));
+app.get("/dashboard.html", (req, res) => res.redirect(301, "/dashboard"));
 
 app.use(express.static(PUBLIC_DIR, {
   maxAge: isProd ? "1y" : 0,
