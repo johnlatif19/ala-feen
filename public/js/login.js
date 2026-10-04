@@ -181,7 +181,7 @@
 
       showMessage("تم تسجيل الدخول، جارٍ التحويل...", "info");
 
-      const target = (data && data.redirect) || "/dashboard.html";
+      const target = (data && data.redirect) || "/dashboard";
       window.location.replace(target);
     } catch (err) {
       showMessage("تعذر الاتصال بالخادم، تحقق من الشبكة", "error");
