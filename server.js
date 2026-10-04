@@ -1087,6 +1087,116 @@ app.post("/api/sync/ack", requireAuth, requireCsrf, asyncHandler(async (req, res
 }));
 
 /* =========================================================
+   22.5. PUBLIC APP API (v1)
+   ========================================================= */
+
+const PUBLIC_COMPLAINT_TYPES = [
+  "complaint",
+  "suggestion",
+  "wrong_price",
+  "missing_route",
+  "closed_stop",
+  "route_changed",
+  "wrong_info",
+  "other",
+];
+
+const publicRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, message: "تم تجاوز عدد البلاغات، حاول بعد دقيقة" },
+});
+
+app.get("/api/v1/public/health", (req, res) => {
+  return ok(res, { status: "up", ts: new Date().toISOString() });
+});
+
+app.get("/api/v1/public/categories", (req, res) => {
+  const list = [
+    { id: "complaint",      label: "شكوى" },
+    { id: "suggestion",     label: "اقتراح" },
+    { id: "wrong_price",    label: "سعر غير صحيح" },
+    { id: "missing_route",  label: "خط غير موجود" },
+    { id: "closed_stop",    label: "موقف مغلق" },
+    { id: "route_changed",  label: "الطريق تغيّر" },
+    { id: "wrong_info",     label: "معلومة غير صحيحة" },
+    { id: "other",          label: "مشكلة أخرى" },
+  ];
+  return ok(res, { items: list });
+});
+
+app.post(
+  "/api/v1/public/complaints",
+  publicRateLimiter,
+  asyncHandler(async (req, res) => {
+    const body = req.body || {};
+
+    const type = sanitizeString(body.type || "", 32) || "other";
+    const title = sanitizeString(body.title || "", 200);
+    const description = sanitizeString(body.description || "", 2000);
+    const location = sanitizeString(body.location || "", 200);
+    const transportType = sanitizeString(body.transportType || "", 60);
+    const routeId = sanitizeString(body.routeId || "", 120);
+    const contactPhone = sanitizeString(body.contactPhone || "", 20);
+    const platform = sanitizeString(body.platform || "android", 20);
+    const appVersion = sanitizeString(body.appVersion || "", 20);
+
+    if (!PUBLIC_COMPLAINT_TYPES.includes(type)) {
+      return fail(res, 400, "نوع البلاغ غير صحيح");
+    }
+    if (title.length < 3) {
+      return fail(res, 400, "العنوان مطلوب (3 أحرف على الأقل)");
+    }
+    if (description.length < 5) {
+      return fail(res, 400, "التفاصيل مطلوبة (5 أحرف على الأقل)");
+    }
+
+    const latitude = Number(body.latitude);
+    const longitude = Number(body.longitude);
+    const hasCoords =
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 && latitude <= 90 &&
+      longitude >= -180 && longitude <= 180;
+
+    const payload = {
+      type,
+      title,
+      description,
+      location,
+      transportType,
+      routeId,
+      contactPhone,
+      platform,
+      appVersion,
+      images: [],
+      status: "new",
+      priority: "low",
+      verified: false,
+      confirmations: 0,
+      adminNote: "",
+      userId: null,
+      source: "mobile_app",
+      deleted: false,
+      createdAt: nowTs(),
+      updatedAt: nowTs(),
+    };
+
+    if (hasCoords) {
+      payload.latitude = latitude;
+      payload.longitude = longitude;
+    }
+
+    const ref = await col("complaints").add(payload);
+    const created = await ref.get();
+
+    return ok(res, { item: normalizeDoc(created) }, 201);
+  })
+);
+
+/* =========================================================
    23. STATIC + PAGES
    ========================================================= */
 
